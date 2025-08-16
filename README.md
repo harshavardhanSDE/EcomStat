@@ -1,5 +1,6 @@
 # EcomState: A local-first installation of Hadoop, spark and Hop for E-commerce Data processing pipeline ( Educational purpose, Not for production ).
 
+
 ## Hadoop: `hadoop 3.4.1`
 
 For data lake (Storing raw, and unprocessed data), we'll be using Hadoop. Hadoop is installed via docker for identical repeatable workflow.
@@ -46,6 +47,8 @@ services:
         - ./config
 ```
 
+To know more about the `docker-compse.yaml` file, visit [Compose file reference](https://docs.docker.com/reference/compose-file "compose file reference").
+
 #### config
 
 ```plaintext
@@ -80,6 +83,13 @@ CAPACITY-SCHEDULER.XML_yarn.scheduler.capacity.queue-mappings-override.enable=fa
 
 >  `important` Do not forget to set the `HADOOP_HOME` variable in your shell, otherwise the installation produces error, requiring the variable.
 
+Now, let's explore what each and every configuration is about,
+
+`CORE-SITE.XML_fs.default.name=hdfs://namenode`: is depreceated in current version of hadoop, we've still added it for supporting legacy implementation. It is similar to `CORE-SITE.XML_fs.defaultFS=hdfs://namenode`: Which is the default file systems used. It is a URI that points to the `namenode` of the hadoop cluster, or other supported file system, such as cloud storage( eg: s3 ). The value of `fs.defaultFS` is usefull when using commands like `hdfs dfs -ls /` which without setting the option would look like `hdfs dfs -ls hdfs://namenode/`.
+
+`HDFS-SITE.XML_dfs.namenode.rpc-address=namenode:8020` : The namenode uses RPC ( remote procedure calls ) protocol to interact with clients and datanodes. Clients and Datanode sends requests to the namenode for operations like reading, writing and managing data. The Namenode listens on `namenode:8020` ( host and port ) for client and Datanode communication.
+
+
 The files `docker-compose.yaml` and `config` are ought to be in the same level in a directory, otherwise change the `.env_file` attribute in `docker-compose.yaml` to appropriate file location.
 
 Above `docker-compose.yaml` starts containers `hadoop_namenode_1`, `hadoop_datanode_1`, `hadoop_nodemanager_1`, and `hadoop_resourcemanager_1` with the specified hadoop version, which can be viewed by typing `docker ps`.
@@ -97,4 +107,21 @@ bcbd06417df8   apache/hadoop:3.4.1   "/usr/local/bin/dumb…"   21 minutes ago  
 
 #### Logging into an node interactively, and executing a `hdfs` command.
 
-To log into an node interactively, go to terminal and type `docker exec -it hadoop_namenode_1 /bin/bash`. This command logs into the `hadoop_namenode_1` container, and starts the bash shell.
+To log into an node interactively, go to terminal and type `docker exec -it hadoop_namenode_1 /bin/bash`. This command logs into the `hadoop_namenode_1` container, and starts the bash shell. And to view the `namenode` UI, go to url [localhost:9870](localhost:9870 "name node UI")
+
+#### ex: Creating and viewing a directory in `HDFS`.
+
+once the interactive terminal of `namenode` is active,enter `hdfs dfs -mkdir /data` on terminal. This command creates `/data` directory of the hdfs root. To view the created directory, enter `hdfs dfs -ls /`, where `/` is for the root directory.
+
+```plaintext
+bash-4.2$ hdfs dfs -ls /  
+Found 1 items
+drwxr-xr-x   - hadoop supergroup          0 2025-08-16 06:46 /data
+
+```
+
+## Airflow: For scheduling
+
+### Installing Airflow ( Docker & Docker-compose )
+
+Getting the `docker-compose.yaml` from `https://airflow.apache.org/docs/apache-airflow/3.0.4/docker-compose.yaml`, using `curl -LfO https://airflow.apache.org/docs/apache-airflow/3.0.4/docker-compose.yaml `
